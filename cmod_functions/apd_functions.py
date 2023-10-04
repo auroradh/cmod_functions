@@ -215,7 +215,7 @@ def efit_major_radius_to_rho(R, Z, time_array, shot_number, tree):
     import eqtools as eq
     import numpy as np
 
-    cmod_efit = eq.CModEFITTree(shot_number, tree)
+    cmod_efit = eq.CModEFIT.CModEFITTree(shot_number, tree)
 
     # Major radii (in m) of the R,Z coordinate arrays
     # flux-surface-mapped to the height of the magnetic axis at each
