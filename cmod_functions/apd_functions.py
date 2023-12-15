@@ -74,6 +74,7 @@ def generate_raw_apd_dataset(
     time_start: float = -np.inf,
     time_end: float = np.inf,
     subtract_background=False,
+    remove_dead_pixels=False,
 ):
     """
     Generates an xarray dataset containing raw APD data for a shot
@@ -84,6 +85,7 @@ def generate_raw_apd_dataset(
         time_end: The end of the time window in seconds. Set to last frame by default.
         subtract_background: Option to subtract low light levels which will return an inverted signal.
                             Default to False, where this will return just the raw signal, uninverted.
+        remove_dead_pixels: If True, dead pixels are set to NaN.
 
     Returns:
         dataset: An xarray dataset containing raw APD data for all pixels: x, y = [0,0] refers to the lowest R and Z values.
@@ -106,12 +108,12 @@ def generate_raw_apd_dataset(
     R, Z = get_major_radius_coordinates(shot_number)
 
     apd_signal_array = _create_apd_signal_array(
-        frames, moving_window, subtract_background
+        frames, moving_window, subtract_background, remove_dead_pixels
     )
     return _create_xr_dataset(apd_signal_array, time, time_start, time_end, R, Z)
 
 
-def _create_apd_signal_array(frames, moving_window, subtract_background):
+def _create_apd_signal_array(frames, moving_window, subtract_background, remove_dead_pixels):
     """
     Creates an APD signal array from the raw APD frames.
     This contains all the data from the diode pixels and may contain time series from dead pixels.
@@ -120,6 +122,7 @@ def _create_apd_signal_array(frames, moving_window, subtract_background):
         frames: Raw frames extracted for all pixels.
         moving_window: The size of the moving window.
         subtract_background: Option to subtract low light levels which will return an inverted signal.
+        remove_dead_pixels: If True, dead pixels are set to NaN.
 
     Returns:
         apd_signal_array: An APD signal array from the raw APD frames.
@@ -138,15 +141,35 @@ def _create_apd_signal_array(frames, moving_window, subtract_background):
 
     for i in range(len(apd_pixel_list)):
         raw_signal = frames[:, apd_pixel_list[i][0], apd_pixel_list[i][1]]
-
+        #print(f'{raw_signal=}')
+        if remove_dead_pixels:
+            offset_pixel = np.mean(raw_signal[:200])
+            offset_frames = offset_pixel - raw_signal[:]
+            means = np.mean(offset_frames)
+            #print(f'{means=}')
+            #print(f'{np.average(means)*0.05=}')
+            if means <= np.average(means)*0.05:
+                print(f'{means=}')
+                print(f'{np.average(means)*0.05=}')
+                #print('hei')
+                #print(f'{raw_signal[:]=}')
+                raw_signal[:] = np.nan
+                #print(f'{raw_signal[:]=}')
         if subtract_background:
             offset = np.mean(raw_signal[:200])
             raw_signal = offset - raw_signal[:]
 
+        #print(f'{raw_signal=}')
         time_series = raw_signal[2 * moving_window : -2 * moving_window]
+        #print(f'{time_series=}')
+        #print(f'{time_series[:]=}')
         apd_signal_array[i, :] = time_series[:]
-
+        #print(f'{apd_signal_array[i,:]=}')
+        #print(f'{apd_signal_array=}')
+        #print(f'{np.isnan(apd_signal_array).all()=}')
+        #print(f'{np.argwhere(np.isnan(apd_signal_array))=}')
     return apd_signal_array
+
 
 
 def _create_xr_dataset(apd_signal_array, time, time_start, time_end, R, Z):
