@@ -68,7 +68,7 @@ def get_sensitivity_callibration(shot_number: int, filter: str):
     c.openTree("spectroscopy", shot_number)
 
     if filter == "H_alpha":
-        return c.get("GPI.PHANTOM:SENS_ARR_DA").data()
+	        return c.get("GPI.PHANTOM:SENS_ARR_DA").data()
     if filter == "He-587":
         return c.get("GPI.PHANTOM:SENS_ARR_HEI").data()
 
@@ -153,11 +153,11 @@ def calculate_splinted_LCFS(
     closest_zbbbs = zbbbs[:, time_index]
 
     f = interpolate.interp1d(
-        closest_zbbbs[closest_rbbbs >= 0.86],
-        closest_rbbbs[closest_rbbbs >= 0.86],
+        closest_zbbbs[closest_rbbbs >= 0.84],
+        closest_rbbbs[closest_rbbbs >= 0.84],
         kind="cubic",
     )
-    z_fine = np.linspace(-0.08, 0.01, 100)
+    z_fine = np.linspace(0, 0.13, 100)
     r_fine = f(z_fine)
 
     return r_fine, z_fine
@@ -170,7 +170,7 @@ def calculate_splinted_limiter(R_limiter: np.ndarray, Z_limiter: np.ndarray):
         R_limiter,
         kind="cubic",
     )
-    z_fine = np.linspace(-0.08, 0.01, 100)
+    z_fine = np.linspace(0, 0.13, 100)
     r_fine = f(z_fine)
 
     return r_fine, z_fine
